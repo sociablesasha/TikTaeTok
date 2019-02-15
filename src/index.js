@@ -2,6 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
+Array.matrix = function(rows, cols, init) {
+    var arr;
+    var row = [];
+    for (let i = 0; i < rows; i++) {
+        var col = [];
+        for (let j = 0; j < cols; j++) {
+            col[j] = init;
+        }
+        row[i] = col;
+    }
+    arr = row;
+    return arr;
+}
+
 class Square extends React.Component {
     render() {
         return (
@@ -18,7 +32,7 @@ class Board extends React.Component {
         row -= 1;
 
         return <Square
-            value={this.props.squares[col][row]}
+            value={this.props.squares[row][col]}
             onClick={() => this.props.onClick(row, col)}
         />;
     }
@@ -28,17 +42,17 @@ class Board extends React.Component {
             <div>
                 <div className="board-row">
                     {this.renderSquare(1, 1)}
-                    {this.renderSquare(2, 1)}
-                    {this.renderSquare(3, 1)}
-                </div>
-                <div className="board-row">
                     {this.renderSquare(1, 2)}
-                    {this.renderSquare(2, 2)}
-                    {this.renderSquare(3, 2)}
+                    {this.renderSquare(1, 3)}
                 </div>
                 <div className="board-row">
-                    {this.renderSquare(1, 3)}
+                    {this.renderSquare(2, 1)}
+                    {this.renderSquare(2, 2)}
                     {this.renderSquare(2, 3)}
+                </div>
+                <div className="board-row">
+                    {this.renderSquare(3, 1)}
+                    {this.renderSquare(3, 2)}
                     {this.renderSquare(3, 3)}
                 </div>
             </div>
@@ -51,7 +65,7 @@ class Game extends React.Component {
         super(props);
         this.state = {
             history: [{
-                squares: Array(Array(3), Array(3), Array(3)),
+                squares: Array.matrix(3, 3, null),
                 col: null,
                 row: null
             }],
@@ -65,27 +79,24 @@ class Game extends React.Component {
         const current = history[history.length - 1];
         const squares = JSON.parse(JSON.stringify(current.squares));
 
-        console.log(current.squares);
+        console.log(row);
+        console.log(col);
 
-        squares[col][row] = this.state.xIsNext ? 'X' : 'O';
+        if (calculateWinner(squares) || isNaN(squares[row][col])) {
+            return;
+        }
+
+        squares[row][col] = this.state.xIsNext ? 'X' : 'O';
 
         this.setState({
             history: history.concat([{
                 squares: squares,
-                row: row,
-                col: col
+                row: row + 1,
+                col: col + 1,
             }]),
             stepNumber: history.length,
             xIsNext: !this.state.xIsNext
         });
-
-
-        
-        // 
-
-        // // if (calculateWinner(squares) || squares[row][col]) {
-        // //     return;
-        // // }
     }
 
     jumpTo(step) {
@@ -98,12 +109,11 @@ class Game extends React.Component {
     render() {
         const history = this.state.history;
         const current = history[this.state.stepNumber];
-        // const winner = calculateWinner(current.squares);
-        const winner = null;
+        const winner = calculateWinner(current.squares);
 
         const moves = history.map((step, move) => {
             const desc = move ?
-                'Go to move #' + move + " " + getColAndRow(step.col, step.row) :
+                'Go to move #' + move + " " + getRowAndCol(step.row, step.col) :
                 'Go to game start';
             return (
                 <li key={move}>
@@ -140,32 +150,51 @@ class Game extends React.Component {
     }
 }
 
-// function calculateWinner(squares) {
-//     const lines = [
-//         [0, 1, 2],
-//         [3, 4, 5],
-//         [6, 7, 8],
-//         [0, 3, 6],
-//         [1, 4, 7],
-//         [2, 5, 8],
-//         [0, 4, 8],
-//         [2, 4, 6],
-//     ];
+function calculateWinner(squares) {
+    const size = squares.length;
+    
+    var diagonalLeft = [];
+    var diagonalRight = [];
+    var horizontal = [];
+    var vertical = [];
+    for (let i = 0; i < size; i++) {
+        horizontal = [];
+        vertical = [];
+        for (let j = 0; j < size; j++) {
+            horizontal.push(squares[i][j]);
+            vertical.push(squares[j][i]);
+        }
+        diagonalLeft.push(squares[i][i]);
+        diagonalRight.push(squares[size - i - 1][i]);
 
-//     for (let i = 0; i < lines.length; i++) {
-//         const [a, b, c] = lines[i];
-//         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-//             return squares[a];
-//         }
-//     }
+        if (allEquals(horizontal))
+            return horizontal[0];
+        if (allEquals(vertical))
+            return vertical[0];
+    }
 
-//     return null;
-// }
+    if (allEquals(diagonalLeft))
+        return diagonalLeft[0];
+    if (allEquals(diagonalRight))
+        return diagonalRight[0];
 
-function getColAndRow(row, col) {
+    return null;
+}
+
+function getRowAndCol(row, col) {
     return "(" + row + "," + col + ")";
 }
 
+function allEquals(array) {
+    let allEqual = true;
+    for (let i = 1; i < array.length; i++) {
+        if (!isNaN(array[i]) || array[i - 1] !== array[i]) {
+            allEqual = false;
+            break;
+        }
+    }
+    return allEqual;
+}
 
 ReactDOM.render(
     <Game />,
