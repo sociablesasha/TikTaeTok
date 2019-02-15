@@ -1,3 +1,20 @@
+# TicTaeTok
+React를 공부하면서 만든 간단한 게임이다.
+
+## Copy By Reference
+```javascript
+    var a = Array(3);
+    var b = a;
+    // 주소로 객체가 복사된다.
+
+    var a = Array(3);
+    var b = JSON.parse(JSON.stringify(a));
+    // 값으로 객체가 복사된다.
+```
+
+
+---
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
